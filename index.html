@@ -5,122 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeForge Studio v1.0</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 </head>
-<body class="dark-theme">
-    <header>
-        <h1>🎯 CodeForge Studio</h1>
-        <button id="theme-toggle" class="btn-secondary">🌓 Тема</button>
-    </header>
+<body class="dark-theme"> <div class="api-key-safe-zone">
+        <span class="key-label">🔑 API Ключ:</span>
+        <input type="password" id="user-gemini-key" placeholder="Вставьте ваш новый ключ Gemini здесь">
+        <button id="save-key-btn">Сохранить в браузере</button>
+    </div>
 
-    <main>
+    <main class="container">
+        <header>
+            <h1>🛠️ CodeForge Studio</h1>
+            <p class="subtitle">Универсальный ИИ-генератор и операционная система экосистемы</p>
+        </header>
+
         <section class="card">
-            <h3>1. Профиль / Режим работы</h3>
-            <select id="project-preset">
-                <option value="custom">🛠️ Свободный режим (Кастомный промпт)</option>
-                <option value="gas_profi">🔥 Gas-Profi AI (Диагностика котлов, NTC, мануалы)</option>
-                <option value="gymnasio">🚀 Gymnasio Aura (ИИ-репетитор, ELI5, тесты, Stichpunkte)</option>
-                <option value="beauty_crm">💄 BeautyForge CRM (Автоматизация Ольги, рефералы)</option>
-                <option value="beauty_saas">🌐 BeautyGlow SaaS (B2B Multi-tenant платформа)</option>
-                <option value="lead_forge">🎯 LeadForge AI (Сайт-Хамелеон, Авито-робот, гео-SEO)</option>
-                <option value="lang_trainer">📚 Языковой тренажер (Таблица двухколоночная, 32 главы)</option>
-                <option value="exam_b2">🎓 Симулятор Экзамена B2 (Диалоги, Passiv, Konjunktiv II)</option>
-                <option value="diet_tracker">🍏 Командный ИИ-трекер веса и калорий (Голосовой ввод)</option>
-            </select>
+            <h3>Выбор режима / Мини-проекта</h3>
+            <div class="grid-modes">
+                <button class="mode-btn active" data-mode="custom">🧩 Свой проект (ТЗ с нуля)</button>
+                <button class="mode-btn" data-mode="gas-profi">🔥 Gas-Profi AI</button>
+                <button class="mode-btn" data-mode="gymnasio">🚀 Gymnasio Aura</button>
+                <button class="mode-btn" data-mode="crm">💄 BeautyForge CRM</button>
+                <button class="mode-btn" data-mode="saas">🌐 BeautyGlow SaaS</button>
+                <button class="mode-btn" data-mode="language">📚 Языковой тренажер</button>
+                <button class="mode-btn" data-mode="b2-exam">🎓 Симулятор B2</button>
+                <button class="mode-btn" data-mode="diet">🍏 ИИ-Трекер калорий</button>
+            </div>
         </section>
 
         <section class="card">
-            <h3>2. Универсальный ввод информации</h3>
+            <h3>Ввод информации и Контекста</h3>
             
+            <div class="upload-zone" id="drop-zone">
+                <span class="upload-icon">📸</span>
+                <p>Перетащите файл, вставьте текст или нажмите для фото</p>
+                <input type="file" id="file-input" accept="image/*,text/*,application/pdf" hidden>
+            </div>
+
             <div class="voice-container">
-                <button id="voice-btn" class="btn-voice">
-                    <span class="icon">🎤</span> Удерживать и говорить (Push-to-Talk)
+                <button id="ptt-btn" class="ptt-button">
+                    <span class="mic-icon">🎤</span> Удерживать и говорить (Рация)
                 </button>
-                <p id="voice-status" class="status-text">Запись не идет</p>
+                <div id="voice-status" class="voice-status">Связь готова. Нажми и держи.</div>
             </div>
 
-            <div id="drop-zone" class="drop-zone">
-                <p>Перетащите файл (книгу, фото билета, шильдик) или</p>
-                <label class="btn-secondary">
-                    📸 Сделать фото / Выбрать файл
-                    <input type="file" id="file-input" accept="image/*,application/pdf,text/*" style="display:none;">
-                </label>
-                <div id="file-preview"></div>
+            <div class="input-group">
+                <label for="main-context">Основное техническое задание / Контекст задачи:</label>
+                <textarea id="main-context" placeholder="Опишите логику приложения или вставьте сюда распознанный текст параграфа/ошибки котла..."></textarea>
             </div>
-
-            <textarea id="main-prompt" placeholder="Опишите задачу, вставьте текст произведения или надиктуйте данные..."></textarea>
         </section>
 
         <section class="card">
-            <h3>3. Конфигурация вывода и пожелания</h3>
-            <div class="grid-checkboxes">
-                <div class="checkbox-item">
-                    <label><input type="checkbox" id="chk-html" checked> Сгенерировать index.html</label>
-                    <input type="text" id="note-html" class="sub-comment" placeholder="Пожелания к HTML...">
+            <h3>Конфигурация генерации и Вывода</h3>
+            
+            <div class="checkbox-grid">
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="gen-html" checked>
+                        <span class="checkmark"></span> Сгенерировать index.html
+                    </label>
+                    <input type="text" id="note-html" class="sub-comment" placeholder="Особые пожелания к HTML...">
                 </div>
-                <div class="checkbox-item">
-                    <label><input type="checkbox" id="chk-css" checked> Сгенерировать style.css</label>
-                    <input type="text" id="note-css" class="sub-comment" placeholder="Пожелания к дизайну (цвета, стили)...">
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="gen-css" checked>
+                        <span class="checkmark"></span> Сгенерировать style.css
+                    </label>
+                    <input type="text" id="note-css" class="sub-comment" placeholder="Особые пожелания к дизайну/стилям...">
                 </div>
-                <div class="checkbox-item">
-                    <label><input type="checkbox" id="chk-js" checked> Сгенерировать script.js</label>
-                    <input type="text" id="note-js" class="sub-comment" placeholder="Пожелания к логике/API...">
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="gen-js" checked>
+                        <span class="checkmark"></span> Сгенерировать script.js
+                    </label>
+                    <input type="text" id="note-js" class="sub-comment" placeholder="Особые пожелания к логике/API...">
                 </div>
-                <div class="checkbox-item">
-                    <label><input type="checkbox" id="chk-table"> Двухколоночная таблица (Языки)</label>
-                    <input type="text" id="note-table" class="sub-comment" placeholder="Кол-во глав, предложений...">
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="gen-pwa">
+                        <span class="checkmark"></span> Файлы автономии PWA (sw.js / manifest)
+                    </label>
+                    <input type="text" id="note-pwa" class="sub-comment" placeholder="Особые пожелания к офлайн-режиму...">
                 </div>
-                <div class="checkbox-item">
-                    <label><input type="checkbox" id="chk-grammar"> Упор на грамматику (B2)</label>
-                    <input type="text" id="note-grammar" class="sub-comment" placeholder="Passiv, Konjunktiv II...">
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="out-table">
+                        <span class="checkmark"></span> Двухколоночная таблица (Языки)
+                    </label>
+                    <input type="text" id="note-table" class="sub-comment" placeholder="Например: 60 предложений, Passiv, Konjunktiv II...">
+                </div>
+
+                <div class="checkbox-wrapper">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="out-doc">
+                        <span class="checkmark"></span> Подготовить Google Doc / Экспорт для печати
+                    </label>
+                    <input type="text" id="note-doc" class="sub-comment" placeholder="Особые требования к форматированию печати...">
                 </div>
             </div>
 
-            <div class="github-config">
-                <h4>Настройки прямого деплоя на GitHub</h4>
-                <input type="password" id="gh-token" placeholder="GitHub Personal Access Token (Пароль)">
-                <input type="text" id="gh-repo" placeholder="Имя репозитория (например, alex-forge-apps)">
-                <input type="text" id="gh-folder" placeholder="Целевая папка (например, gas-profi)">
-            </div>
-
-            <button id="generate-btn" class="btn-primary">⚡ Запустить генерацию кода и документов</button>
+            <button id="forge-btn" class="main-forge-btn">🚀 ЗАПУСТИТЬ КУЗНИЦУ КОДА</button>
         </section>
 
-        <section class="card output-card">
-            <h3>4. Диалоговое окно и результаты</h3>
-            
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="preview">💬 Диалог / Превью</button>
-                <button class="tab-btn" data-tab="html-out">HTML</button>
-                <button class="tab-btn" data-tab="css-out">CSS</button>
-                <button class="tab-btn" data-tab="js-out">JS / Логика</button>
+        <section class="card dialog-section">
+            <h3>🧠 Сквозной ИИ-Проводник сессии</h3>
+            <div class="chat-window" id="chat-window">
+                <div class="chat-msg system">Платформа инициализирована. Вся экосистема Forge_Ecosystem_2026 загружена в контекст. Задайте уточняющий вопрос или запустите генерацию.</div>
             </div>
+            <div class="chat-input-zone">
+                <input type="text" id="chat-input" placeholder="Задайте идею, доработайте код, измените язык текста...">
+                <button id="chat-send-btn">Отправить</button>
+            </div>
+        </section>
 
-            <div class="tab-contents">
-                <div id="preview" class="tab-content active">
-                    <div id="chat-history" class="chat-history">
-                        <p class="system-msg">Система готова. Задайте вопрос или загрузите ТЗ для генерации.</p>
-                    </div>
-                    <div class="chat-input-zone">
-                        <input type="text" id="chat-reply" placeholder="Задать уточняющий вопрос платформе без потери контекста...">
-                        <button id="chat-send-btn" class="btn-secondary">Отправить</button>
-                    </div>
+        <section class="card result-section" id="result-section" style="display: none;">
+            <div class="result-header">
+                <h3>📋 Результат сборки проекта</h3>
+                <div class="export-actions">
+                    <button class="action-btn copy" id="copy-all-btn">📋 Копировать всё</button>
+                    <button class="action-btn download" id="download-zip-btn">📦 Скачать ZIP</button>
+                    <button class="action-btn print" id="print-btn">🖨️ Печать / PDF</button>
                 </div>
-                <div id="html-out" class="tab-content"><textarea readonly></textarea></div>
-                <div id="css-out" class="tab-content"><textarea readonly></textarea></div>
-                <div id="js-out" class="tab-content"><textarea readonly></textarea></div>
             </div>
 
-            <div class="export-actions">
-                <button id="btn-copy" class="btn-secondary">📋 Скопировать всё</button>
-                <button id="btn-download" class="btn-secondary">📥 Скачать ZIP-архив</button>
-                <button id="btn-gdoc" class="btn-secondary">📄 В Google Документ</button>
-                <button id="btn-deploy" class="btn-deploy">🚀 Загрузить сразу на GitHub и выдать ссылку</button>
-            </div>
-            <div id="deploy-url-zone" class="deploy-url-zone"></div>
+            <div class="tabs-header" id="tabs-header">
+                </div>
+            <div class="tabs-content" id="tabs-content">
+                </div>
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
