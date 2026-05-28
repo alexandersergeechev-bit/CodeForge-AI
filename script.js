@@ -144,7 +144,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// 100% Рабочий URL и отказоустойчивый вызов API
+// Стабильный отправщик запросов в Google Gemini 1.5 Flash
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -152,8 +152,8 @@ async function callGemini(promptText) {
         return null;
     }
 
-    // Исправленный эндпоинт для работы со структурированным JSON
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Использована стабильная версия v1 и точный путь к модели
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     try {
         const response = await fetch(url, {
@@ -169,7 +169,7 @@ async function callGemini(promptText) {
                 ],
                 generationConfig: { 
                     temperature: 0.2,
-                    responseMimeType: "application/json"
+                    responseMimeType: "application/json" // Жесткий JSON-формат
                 }
             })
         });
@@ -177,13 +177,13 @@ async function callGemini(promptText) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error("Детали ошибки от Google API:", errorData);
-            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера. Проверьте правильность API ключа.'}`);
+            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера.'}`);
             return null;
         }
 
         const data = await response.json();
         
-        // Безопасное чтение глубокой структуры (устраняет ошибку Cannot read properties of undefined)
+        // Безопасное чтение структуры ответа v1
         const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (outputText) {
