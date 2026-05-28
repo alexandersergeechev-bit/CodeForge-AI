@@ -144,7 +144,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// Финальный, скорректированный под требования Google AI Studio отправщик запросов
+// Официальный и защищенный метод вызова через Google Generative AI SDK
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -152,47 +152,35 @@ async function callGemini(promptText) {
         return null;
     }
 
-    // Правильный рабочий URL: модель v1beta является частью пути, а метод generateContent идет в конце
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json" 
-            },
-            body: JSON.stringify({
-                contents: [
-                    { 
-                        parts: [{ text: promptText }] 
-                    }
-                ],
-                generationConfig: { 
-                    temperature: 0.2 // Без конфликтных флагов типов, строго по ТЗ
-                }
-            })
+        // Динамически импортируем официальный модуль Google
+        const { GoogleGenAI } = await import('@google/generative-ai');
+        
+        // Инициализируем клиент ключом
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        
+        // Вызываем модель напрямую через SDK
+        const response = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: promptText,
+            config: {
+                temperature: 0.2
+            }
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("Детали ошибки от Google API:", errorData);
-            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера.'}`);
-            return null;
-        }
+        // Получаем чистый текст ответа
+        const outputText = response.text;
 
-        const data = await response.json();
-        const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        
         if (outputText) {
             return outputText;
         } else {
-            console.error("Пустой ответ от API:", data);
+            console.error("Пустой ответ от SDK:", response);
             alert("ИИ вернул пустой контент. Попробуйте ещё раз.");
             return null;
         }
     } catch (err) {
-        console.error("Сбой сети или CORS:", err);
-        alert("Сетевая ошибка. Проверьте консоль (F12), токен или VPN.");
+        console.error("Критическая ошибка Google SDK:", err);
+        alert(`❌ Сбой при связи с Gemini через SDK: ${err.message || 'Проверьте токен или VPN.'}`);
         return null;
     }
 }
