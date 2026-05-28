@@ -144,7 +144,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// Стабильный отправщик запросов в Google Gemini 1.5 Flash
+// Абсолютно стабильный отправщик запросов в Google Gemini 1.5 Flash (Версия v1)
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -152,7 +152,7 @@ async function callGemini(promptText) {
         return null;
     }
 
-    // Использована стабильная версия v1 и точный путь к модели
+    // Строго версия v1 — без beta!
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     try {
@@ -168,8 +168,8 @@ async function callGemini(promptText) {
                     }
                 ],
                 generationConfig: { 
-                    temperature: 0.2,
-                    responseMimeType: "application/json" // Жесткий JSON-формат
+                    temperature: 0.1, // Минимальная температура для точности кода
+                    responseMimeType: "application/json"
                 }
             })
         });
@@ -182,20 +182,18 @@ async function callGemini(promptText) {
         }
 
         const data = await response.json();
-        
-        // Безопасное чтение структуры ответа v1
         const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (outputText) {
             return outputText;
         } else {
-            console.error("Неожиданная или пустая структура ответа API:", data);
-            alert("ИИ вернул пустой ответ. Попробуйте еще раз.");
+            console.error("Пустой ответ от API:", data);
+            alert("ИИ вернул пустой контент. Попробуйте ещё раз.");
             return null;
         }
     } catch (err) {
         console.error("Сбой сети или CORS:", err);
-        alert("Произошла сетевая ошибка при связи с сервером Gemini. Проверьте консоль браузера (F12), ключ или VPN/соединение.");
+        alert("Сетевая ошибка. Проверьте консоль (F12), токен или VPN.");
         return null;
     }
 }
