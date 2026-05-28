@@ -1,0 +1,9 @@
+{
+  "name": "CodeForge Studio Orchestrator",
+  "short_name": "CodeForge",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait"
+}
