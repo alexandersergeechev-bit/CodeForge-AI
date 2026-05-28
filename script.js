@@ -148,7 +148,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// Отправка запросов в бесплатный Gemini API
+// Стабильный отправщик запросов в Google Gemini 1.5 Flash
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -156,23 +156,45 @@ async function callGemini(promptText) {
         return null;
     }
 
-    // Используем актуальную и стабильную модель Gemini 1.5 Flash (быстрая, бесплатная, огромный контекст)
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json" 
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: promptText }] }],
-                generationConfig: { temperature: 0.2 } // Низкая температура для максимальной точности кода
+                contents: [
+                    { 
+                        parts: [{ text: promptText }] 
+                    }
+                ],
+                generationConfig: { 
+                    temperature: 0.2,
+                    responseMimeType: "application/json" // Принудительный JSON ответ уровня архитектуры Google
+                }
             })
         });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("Детали ошибки от Google API:", errorData);
+            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера'}`);
+            return null;
+        }
+
         const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
+        
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            console.error("Неожиданная структура ответа API:", data);
+            return null;
+        }
     } catch (err) {
-        console.error(err);
-        alert("Произошла ошибка при связи с сервером Gemini. Проверьте ключ или соединение.");
+        console.error("Сбой сети или CORS:", err);
+        alert("Произошла сетевая ошибка при связи с сервером Gemini. Проверьте консоль браузера (F12), ключ или VPN/соединение.");
         return null;
     }
 }
@@ -219,7 +241,7 @@ async function generateProject() {
 // Парсинг JSON-ответа от ИИ и рендеринг вкладок
 function parseAndRenderResult(rawText) {
     try {
-        // Очищаем текст от возможных ИИ-артефактов разметки ```json
+        // Очищаем текст от возможных остаточных ИИ-артефактов разметки
         let cleanedText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
         generatedFiles = JSON.parse(cleanedText);
         
@@ -257,7 +279,7 @@ function parseAndRenderResult(rawText) {
         appendAiMessage("🛠️ Проект успешно скомпилирован! Файлы разложены по вкладкам ниже.");
     } catch (e) {
         console.error("Ошибка парсинга кода:", e, rawText);
-        // Если ИИ выдал не JSON, выводим как монолитный текстовый файл
+        // Если ИИ выдал не JSON (или защитная схема дала сбой), выводим как монолитный текстовый файл
         generatedFiles = { "output.txt": rawText };
         parseAndRenderResult(JSON.stringify(generatedFiles));
     }
