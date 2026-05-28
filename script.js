@@ -144,7 +144,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// Абсолютно стабильный отправщик запросов в Google Gemini 1.5 Flash (Версия v1)
+// Полностью скорректированный отправщик запросов в Google Gemini 1.5 Flash (Версия v1)
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -152,7 +152,6 @@ async function callGemini(promptText) {
         return null;
     }
 
-    // Строго версия v1 — без beta!
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     try {
@@ -168,10 +167,10 @@ async function callGemini(promptText) {
                     }
                 ],
                 generationConfig: { 
-    temperature: 0.2,
-    // В версии v1 это поле пишется строго через нижнее подчёркивание
-    response_mime_type: "application/json" 
-}
+                    temperature: 0.2,
+                    // Исправлено:snake_case для стабильной версии v1
+                    response_mime_type: "application/json"
+                }
             })
         });
 
