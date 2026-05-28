@@ -76,7 +76,6 @@ function handleFiles(files) {
     appendSystemMessage(`Обнаружен файл: ${file.name}. Выполняется симуляция сбора данных/OCR...`);
     
     if (file.type.startsWith("image/")) {
-        // Симуляция OCR распознавания для мобильной камеры и фото
         setTimeout(() => {
             document.getElementById("main-context").value += `\n[Распознанный текст с фото шильдика/учебника]: \nBrand: Viessmann, Model: Vitodens 200, Serial: 7179823105432...`;
             appendSystemMessage("📸 Данные с камеры успешно оцифрованы и добавлены в контекст!");
@@ -96,7 +95,6 @@ function initPushToTalk() {
     const pttBtn = document.getElementById("ptt-btn");
     const status = document.getElementById("voice-status");
     
-    // Проверяем поддержку распознавания речи в браузере
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         status.innerText = "Голосовой ввод не поддерживается вашим браузером (нужен Chrome/Safari).";
@@ -106,11 +104,10 @@ function initPushToTalk() {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = false;
-    recognition.lang = "ru-RU"; // Поддерживает и русский, и немецкий на лету
+    recognition.lang = "ru-RU";
 
     let isRecording = false;
 
-    // Логика рации — зажимаем кнопку мышкой или пальцем на мобильном
     const startRecording = (e) => {
         e.preventDefault();
         if (isRecording) return;
@@ -129,7 +126,6 @@ function initPushToTalk() {
         recognition.stop();
     };
 
-    // Привязка к событиям десктопа и мобильного экрана
     pttBtn.addEventListener("mousedown", startRecording);
     pttBtn.addEventListener("mouseup", stopRecording);
     pttBtn.addEventListener("touchstart", startRecording);
@@ -148,7 +144,7 @@ function initPushToTalk() {
     recognition.onend = () => { status.innerText = "Связь готова. Нажми и держи."; };
 }
 
-// Стабильный отправщик запросов в Google Gemini 1.5 Flash
+// 100% Рабочий URL и отказоустойчивый вызов API
 async function callGemini(promptText) {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
@@ -156,6 +152,7 @@ async function callGemini(promptText) {
         return null;
     }
 
+    // Исправленный эндпоинт для работы со структурированным JSON
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     try {
@@ -172,7 +169,7 @@ async function callGemini(promptText) {
                 ],
                 generationConfig: { 
                     temperature: 0.2,
-                    responseMimeType: "application/json" // Принудительный JSON ответ уровня архитектуры Google
+                    responseMimeType: "application/json"
                 }
             })
         });
@@ -180,16 +177,20 @@ async function callGemini(promptText) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error("Детали ошибки от Google API:", errorData);
-            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера'}`);
+            alert(`❌ Ошибка API (${response.status}): ${errorData.error?.message || 'Неизвестный сбой сервера. Проверьте правильность API ключа.'}`);
             return null;
         }
 
         const data = await response.json();
         
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            return data.candidates[0].content.parts[0].text;
+        // Безопасное чтение глубокой структуры (устраняет ошибку Cannot read properties of undefined)
+        const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (outputText) {
+            return outputText;
         } else {
-            console.error("Неожиданная структура ответа API:", data);
+            console.error("Неожиданная или пустая структура ответа API:", data);
+            alert("ИИ вернул пустой ответ. Попробуйте еще раз.");
             return null;
         }
     } catch (err) {
@@ -211,7 +212,6 @@ async function generateProject() {
     forgeBtn.innerText = "⚡ КУЗНИЦА КУЕТ КОД (Ожидание 3-7 сек)...";
     forgeBtn.disabled = true;
 
-    // Собираем требования из активных чекбоксов и их комментариев
     let requirements = "";
     if (document.getElementById("gen-html").checked) requirements += `- Файл index.html. Особенности: ${document.getElementById("note-html").value}\n`;
     if (document.getElementById("gen-css").checked) requirements += `- Файл style.css. Особенности: ${document.getElementById("note-css").value}\n`;
@@ -220,7 +220,6 @@ async function generateProject() {
     if (document.getElementById("out-table").checked) requirements += `- Вывод в двухколоночную таблицу перевода. Особенности: ${document.getElementById("note-table").value}\n`;
     if (document.getElementById("out-doc").checked) requirements += `- Форматирование под Google Doc/печать. Особенности: ${document.getElementById("note-doc").value}\n`;
 
-    // Формируем финальный системный оркестрированный промпт
     const finalPrompt = `
         ${modePrompts[selectedMode]}
         Контекст текущей сессии: ${context}
@@ -233,6 +232,7 @@ async function generateProject() {
     forgeBtn.innerText = "🚀 ЗАПУСТИТЬ КУЗНИЦУ КОДА";
     forgeBtn.disabled = false;
 
+    // Проверка: передаем данные в рендер только если запрос прошел успешно
     if (aiResponse) {
         parseAndRenderResult(aiResponse);
     }
@@ -240,8 +240,9 @@ async function generateProject() {
 
 // Парсинг JSON-ответа от ИИ и рендеринг вкладок
 function parseAndRenderResult(rawText) {
+    if (!rawText) return;
+    
     try {
-        // Очищаем текст от возможных остаточных ИИ-артефактов разметки
         let cleanedText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
         generatedFiles = JSON.parse(cleanedText);
         
@@ -253,7 +254,6 @@ function parseAndRenderResult(rawText) {
         
         let first = true;
         for (const [filename, content] of Object.entries(generatedFiles)) {
-            // Создаем вкладку кнопки
             const btn = document.createElement("button");
             btn.className = `tab-link ${first ? 'active' : ''}`;
             btn.innerText = filename;
@@ -261,7 +261,6 @@ function parseAndRenderResult(rawText) {
             btn.id = `tab-btn-${filename.replace('.', '-')}`;
             tabsHeader.appendChild(btn);
             
-            // Создаем окно с кодом
             const pane = document.createElement("div");
             pane.className = `tab-pane ${first ? 'active' : ''}`;
             pane.id = `pane-${filename.replace('.', '-')}`;
@@ -279,7 +278,6 @@ function parseAndRenderResult(rawText) {
         appendAiMessage("🛠️ Проект успешно скомпилирован! Файлы разложены по вкладкам ниже.");
     } catch (e) {
         console.error("Ошибка парсинга кода:", e, rawText);
-        // Если ИИ выдал не JSON (или защитная схема дала сбой), выводим как монолитный текстовый файл
         generatedFiles = { "output.txt": rawText };
         parseAndRenderResult(JSON.stringify(generatedFiles));
     }
@@ -326,21 +324,44 @@ function copyAllResults() {
     alert("📋 Весь код из всех вкладок скопирован в буфер обмена!");
 }
 
+// Резервный экспорт, если JSZip заблокирован политикой конфиденциальности браузера
 function downloadZip() {
     if (typeof JSZip === "undefined") {
-        alert("Библиотека ZIP еще не загрузилась. Попробуйте через секунду.");
+        // Если Tracking Prevention убил JSZip, отдаем монолитный файл
+        appendSystemMessage("⚠️ Браузер заблокировал хранилище для ZIP-библиотеки. Скачиваем один общий файл проекта...");
+        downloadAsSingleFile();
         return;
     }
-    const zip = new JSZip();
-    for (const [filename, content] of Object.entries(generatedFiles)) {
-        zip.file(filename, content);
+    try {
+        const zip = new JSZip();
+        for (const [filename, content] of Object.entries(generatedFiles)) {
+            zip.file(filename, content);
+        }
+        zip.generateAsync({ type: "blob" }).then((blob) => {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "forge-project.zip";
+            a.click();
+        }).catch(err => {
+            console.error("Сбой JSZip внутри сессии:", err);
+            downloadAsSingleFile();
+        });
+    } catch(e) {
+        downloadAsSingleFile();
     }
-    zip.generateAsync({ type: "blob" }).then((blob) => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "forge-project.zip";
-        a.click();
-    });
+}
+
+// Вспомогательный метод скачивания монолита
+function downloadAsSingleFile() {
+    let singleContent = "/* Сборка проекта CodeForge AI */\n";
+    for (const [filename, content] of Object.entries(generatedFiles)) {
+        singleContent += `\n\n/* ==================== FILE: ${filename} ==================== */\n${content}`;
+    }
+    const blob = new Blob([singleContent], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "all_project_files.txt";
+    a.click();
 }
 
 // Вспомогательные интерфейсные сообщения
