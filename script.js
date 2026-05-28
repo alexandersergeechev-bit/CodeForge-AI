@@ -168,9 +168,10 @@ async function callGemini(promptText) {
                     }
                 ],
                 generationConfig: { 
-                    temperature: 0.1, // Минимальная температура для точности кода
-                    responseMimeType: "application/json"
-                }
+    temperature: 0.2,
+    // В версии v1 это поле пишется строго через нижнее подчёркивание
+    response_mime_type: "application/json" 
+}
             })
         });
 
